@@ -8,7 +8,7 @@ export default function StoreLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[var(--fut-bg-dark)]">
+    <div className="min-h-screen bg-[var(--nxg-bg-primary)]">
       <Navigation />
       <main>{children}</main>
       <CartSidebar />

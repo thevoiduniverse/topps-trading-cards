@@ -39,7 +39,6 @@ export default function PacksPage() {
     setRevealedCards([]);
     setCurrentRevealIndex(0);
 
-    // Simulate pack opening animation
     setTimeout(async () => {
       try {
         const res = await fetch('/api/packs/open', {
@@ -61,7 +60,6 @@ export default function PacksPage() {
         setRevealedCards(data.cards);
         setRevealPhase('revealing');
 
-        // Start revealing cards one by one
         for (let i = 0; i < data.cards.length; i++) {
           await new Promise((resolve) => setTimeout(resolve, 400));
           setCurrentRevealIndex(i + 1);
@@ -88,127 +86,127 @@ export default function PacksPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[var(--fut-gold)] border-t-transparent" />
+        <div className="w-12 h-12 rounded-full border-3 border-[var(--nxg-lime)] border-t-transparent animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
+    <div className="min-h-screen bg-[var(--nxg-bg-primary)]">
       {/* Header */}
-      <div className="text-center mb-12">
-        <h1
-          className="text-5xl md:text-6xl font-bold text-[var(--fut-gold)]"
-          style={{ fontFamily: 'var(--font-bebas)', letterSpacing: '3px' }}
-        >
-          OPEN PACKS
-        </h1>
-        <p className="text-[var(--fut-text-secondary)] mt-2 text-lg">
-          Test your luck and pull legendary cards
-        </p>
-      </div>
+      <div className="bg-[var(--nxg-bg-secondary)] border-b border-[var(--nxg-border)] relative overflow-hidden">
+        {/* Background glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[var(--nxg-purple)]/10 blur-[150px]" />
 
-      {/* Packs Grid */}
-      {packs.length === 0 ? (
-        <div className="text-center py-16 fut-card max-w-md mx-auto">
-          <svg className="w-20 h-20 mx-auto text-[var(--fut-text-muted)] mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-          </svg>
-          <h3 className="text-xl font-bold mb-2">No packs available</h3>
-          <p className="text-[var(--fut-text-secondary)]">
-            Check back soon or contact admin
+        <div className="max-w-7xl mx-auto px-6 py-16 relative text-center">
+          <span className="nxg-badge nxg-badge-purple mb-4 inline-block">Pack Store</span>
+          <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tight">
+            Open Packs
+          </h1>
+          <p className="text-[var(--nxg-text-secondary)] mt-4 text-lg max-w-xl mx-auto">
+            Test your luck and pull legendary cards from our curated pack collection
           </p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {packs.map((pack) => (
-            <div
-              key={pack.id}
-              className="fut-card p-8 text-center group hover:border-[var(--fut-gold)] transition-all duration-300"
-            >
-              {/* Pack Visual */}
-              <div className="relative w-32 h-44 mx-auto mb-6">
-                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-700 rounded-xl pack-glow transform group-hover:scale-105 transition-transform duration-300">
-                  <div className="absolute inset-2 border-2 border-yellow-300/30 rounded-lg" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <svg className="w-12 h-12 mx-auto text-black/60 mb-2" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                      </svg>
-                      <span className="text-black/80 font-bold text-xs uppercase tracking-wider">
-                        {pack.totalCards} Cards
-                      </span>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        {/* Packs Grid */}
+        {packs.length === 0 ? (
+          <div className="text-center py-20 glass-card max-w-md mx-auto">
+            <svg className="w-20 h-20 mx-auto text-[var(--nxg-text-muted)] mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            <h3 className="text-2xl font-semibold text-white mb-2">No packs available</h3>
+            <p className="text-[var(--nxg-text-secondary)]">
+              Check back soon for new drops
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {packs.map((pack) => (
+              <div
+                key={pack.id}
+                className="glass-card p-8 text-center group hover:border-[var(--nxg-lime)]/30 transition-all duration-300"
+              >
+                {/* Pack Visual */}
+                <div className="relative w-36 h-48 mx-auto mb-8">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[var(--nxg-lime)] via-[var(--nxg-lime-dark)] to-[var(--nxg-purple)] rounded-2xl pack-glow transform group-hover:scale-105 transition-transform duration-300">
+                    <div className="absolute inset-3 border-2 border-white/20 rounded-xl" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <svg className="w-14 h-14 mx-auto text-black/70 mb-3" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                        <span className="text-black/80 font-bold text-sm">
+                          {pack.totalCards} Cards
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
+
+                <h3 className="text-2xl font-bold text-white mb-3">
+                  {pack.name}
+                </h3>
+
+                {pack.description && (
+                  <p className="text-[var(--nxg-text-secondary)] text-sm mb-5 leading-relaxed">
+                    {pack.description}
+                  </p>
+                )}
+
+                {/* Rarity Distribution */}
+                <div className="flex flex-wrap justify-center gap-2 mb-6">
+                  {pack.rarityDistribution.map((slot, i) => (
+                    <span
+                      key={i}
+                      className={`nxg-badge nxg-badge-${slot.rarity.toLowerCase().replace('_', '-')} text-xs`}
+                    >
+                      {slot.count}x {RARITY_LABELS[slot.rarity as Rarity]}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="text-3xl font-bold text-[var(--nxg-lime)] mb-6">
+                  ${pack.price}
+                </div>
+
+                <button
+                  onClick={() => handleOpenPack(pack)}
+                  className="nxg-btn w-full text-lg py-4 group-hover:glow-lime"
+                >
+                  Open Pack
+                </button>
               </div>
-
-              <h3
-                className="text-2xl font-bold text-white mb-2"
-                style={{ fontFamily: 'var(--font-bebas)', letterSpacing: '1px' }}
-              >
-                {pack.name}
-              </h3>
-
-              {pack.description && (
-                <p className="text-[var(--fut-text-secondary)] text-sm mb-4">
-                  {pack.description}
-                </p>
-              )}
-
-              {/* Rarity Distribution */}
-              <div className="flex flex-wrap justify-center gap-2 mb-6">
-                {pack.rarityDistribution.map((slot, i) => (
-                  <span
-                    key={i}
-                    className={`fut-badge fut-badge-${slot.rarity.toLowerCase().replace('_', '-')} text-xs`}
-                  >
-                    {slot.count}x {RARITY_LABELS[slot.rarity as Rarity]}
-                  </span>
-                ))}
-              </div>
-
-              <div className="text-3xl font-bold text-[var(--fut-gold)] mb-4">
-                ${pack.price}
-              </div>
-
-              <button
-                onClick={() => handleOpenPack(pack)}
-                className="fut-btn w-full text-lg py-4 group-hover:shadow-lg group-hover:shadow-yellow-500/20"
-              >
-                Open Pack
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Pack Opening Modal */}
       {isOpening && selectedPack && (
         <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center">
           {/* Background effects */}
           <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-br from-yellow-500/20 to-transparent blur-3xl animate-pulse" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-[var(--nxg-lime)]/15 blur-[150px] animate-pulse-glow" />
+            <div className="absolute top-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-[var(--nxg-purple)]/20 blur-[100px] animate-pulse-glow" style={{ animationDelay: '0.5s' }} />
           </div>
 
           {/* Opening Animation */}
           {revealPhase === 'opening' && (
             <div className="relative z-10 text-center">
-              <div className="w-48 h-64 mx-auto mb-8 relative pack-opening">
-                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-700 rounded-xl pack-glow">
-                  <div className="absolute inset-4 border-2 border-yellow-300/30 rounded-lg" />
+              <div className="w-52 h-72 mx-auto mb-10 relative pack-opening">
+                <div className="absolute inset-0 bg-gradient-to-br from-[var(--nxg-lime)] via-[var(--nxg-lime-dark)] to-[var(--nxg-purple)] rounded-2xl pack-glow">
+                  <div className="absolute inset-4 border-2 border-white/20 rounded-xl" />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <svg className="w-16 h-16 text-black/60" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-20 h-20 text-black/60" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                   </div>
                 </div>
               </div>
-              <h2
-                className="text-4xl font-bold text-[var(--fut-gold)] animate-pulse"
-                style={{ fontFamily: 'var(--font-bebas)', letterSpacing: '2px' }}
-              >
-                OPENING {selectedPack.name.toUpperCase()}...
+              <h2 className="text-4xl font-bold text-[var(--nxg-lime)] animate-pulse">
+                Opening {selectedPack.name}...
               </h2>
             </div>
           )}
@@ -216,14 +214,15 @@ export default function PacksPage() {
           {/* Card Reveal */}
           {(revealPhase === 'revealing' || revealPhase === 'done') && (
             <div className="relative z-10 w-full max-w-6xl px-6">
-              <h2
-                className="text-4xl font-bold text-center text-[var(--fut-gold)] mb-8"
-                style={{ fontFamily: 'var(--font-bebas)', letterSpacing: '2px' }}
-              >
-                {revealPhase === 'revealing' ? 'REVEALING YOUR CARDS...' : 'YOUR CARDS!'}
+              <h2 className="text-4xl font-bold text-center text-white mb-10">
+                {revealPhase === 'revealing' ? (
+                  <span className="text-[var(--nxg-purple)]">Revealing...</span>
+                ) : (
+                  <span className="text-[var(--nxg-lime)]">Your Cards!</span>
+                )}
               </h2>
 
-              <div className="flex flex-wrap justify-center gap-4 mb-8">
+              <div className="flex flex-wrap justify-center gap-5 mb-10">
                 {revealedCards.map((card, index) => (
                   <div
                     key={card.id}
@@ -248,19 +247,19 @@ export default function PacksPage() {
 
               {revealPhase === 'done' && (
                 <div className="text-center">
-                  <p className="text-[var(--fut-text-secondary)] mb-6">
+                  <p className="text-[var(--nxg-text-secondary)] mb-8 text-lg">
                     {revealedCards.length} cards added to collection!
                   </p>
                   <div className="flex justify-center gap-4">
                     <button
                       onClick={() => handleOpenPack(selectedPack)}
-                      className="fut-btn text-lg px-8 py-4"
+                      className="nxg-btn text-lg px-10 py-4"
                     >
                       Open Another
                     </button>
                     <button
                       onClick={handleClose}
-                      className="fut-btn fut-btn-secondary text-lg px-8 py-4"
+                      className="nxg-btn nxg-btn-secondary text-lg px-10 py-4"
                     >
                       Done
                     </button>
@@ -274,7 +273,7 @@ export default function PacksPage() {
           {revealPhase !== 'opening' && (
             <button
               onClick={handleClose}
-              className="absolute top-6 right-6 p-3 text-[var(--fut-text-muted)] hover:text-white transition-colors"
+              className="absolute top-6 right-6 p-3 text-[var(--nxg-text-muted)] hover:text-white transition-colors rounded-xl hover:bg-white/5"
             >
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

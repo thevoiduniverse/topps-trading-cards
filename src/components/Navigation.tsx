@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import { useEffect } from 'react';
@@ -21,7 +22,7 @@ export default function Navigation({ isAdmin = false }: NavigationProps) {
 
   const publicLinks = [
     { href: '/', label: 'Home' },
-    { href: '/store', label: 'Store' },
+    { href: '/store', label: 'Marketplace' },
     { href: '/packs', label: 'Open Packs' },
   ];
 
@@ -34,26 +35,39 @@ export default function Navigation({ isAdmin = false }: NavigationProps) {
   const links = isAdmin ? adminLinks : publicLinks;
 
   return (
-    <nav className="fut-nav">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <nav className="nxg-nav">
+      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {/* Logo */}
           <Link href={isAdmin ? '/admin' : '/'} className="flex items-center gap-3 mr-8">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center">
-              <span className="text-black font-black text-lg" style={{ fontFamily: 'var(--font-bebas)' }}>T</span>
+            <div className="relative w-10 h-10 rounded-lg overflow-hidden">
+              <Image
+                src="/logo.jpg"
+                alt="neXGen"
+                fill
+                className="object-cover"
+                priority
+              />
             </div>
-            <span className="text-xl font-bold tracking-wider" style={{ fontFamily: 'var(--font-bebas)', letterSpacing: '2px' }}>
-              {isAdmin ? 'ADMIN' : 'TOPPS'}
-            </span>
+            <div className="flex flex-col">
+              <span className="text-lg font-bold tracking-tight text-white leading-none">
+                {isAdmin ? 'Admin' : 'neXGen'}
+              </span>
+              {!isAdmin && (
+                <span className="text-[10px] font-medium text-[var(--nxg-text-muted)] tracking-wider uppercase">
+                  Collectibles
+                </span>
+              )}
+            </div>
           </Link>
 
           {/* Navigation Links */}
-          <div className="flex">
+          <div className="hidden md:flex">
             {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`fut-nav-link ${pathname === link.href ? 'active' : ''}`}
+                className={`nxg-nav-link ${pathname === link.href ? 'active' : ''}`}
               >
                 {link.label}
               </Link>
@@ -62,25 +76,25 @@ export default function Navigation({ isAdmin = false }: NavigationProps) {
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {isAdmin ? (
-            <Link href="/" className="fut-btn-secondary fut-btn text-sm py-2 px-4">
+            <Link href="/" className="nxg-btn nxg-btn-secondary text-sm py-2.5 px-5">
               View Store
             </Link>
           ) : (
             <>
-              <Link href="/admin" className="fut-nav-link">
+              <Link href="/admin" className="nxg-nav-link hidden md:inline-block">
                 Admin
               </Link>
               <button
                 onClick={toggleCart}
-                className="relative p-3 rounded-lg bg-[var(--fut-bg-card)] border border-[var(--fut-border)] hover:border-[var(--fut-gold)] transition-colors"
+                className="relative p-3 rounded-xl glass-card hover:bg-[var(--nxg-glass-hover)] transition-all"
               >
-                <svg className="w-6 h-6 text-[var(--fut-gold)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                <svg className="w-5 h-5 text-[var(--nxg-lime)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
                 {items.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--fut-gold)] text-black text-xs font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--nxg-lime)] text-black text-xs font-bold rounded-full flex items-center justify-center">
                     {items.length}
                   </span>
                 )}

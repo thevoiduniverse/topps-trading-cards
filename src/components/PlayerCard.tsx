@@ -56,7 +56,7 @@ export default function PlayerCard({
     >
       {/* Rating Badge */}
       <div className="flex items-start justify-between mb-2">
-        <div className={`rating-badge ${sizeClass.rating} rounded-md`}>
+        <div className={`rating-badge ${sizeClass.rating} rounded-lg`}>
           {card.overall}
         </div>
         <div className={`text-right ${subTextColor}`}>
@@ -108,7 +108,7 @@ export default function PlayerCard({
       {/* Price Tag */}
       {showPrice && (
         <div className="mt-auto pt-2 border-t border-black/20">
-          <div className={`text-center ${sizeClass.name} font-bold ${isDarkCard ? 'text-yellow-400' : 'text-gray-900'}`}>
+          <div className={`text-center ${sizeClass.name} font-bold ${isDarkCard ? 'text-[var(--nxg-lime)]' : 'text-gray-900'}`}>
             ${card.price.toLocaleString()}
           </div>
         </div>
@@ -116,7 +116,7 @@ export default function PlayerCard({
 
       {/* Rarity Badge */}
       <div className="absolute bottom-2 right-2">
-        <span className={`fut-badge fut-badge-${rarityClass.replace('-', '-')}`} style={{ fontSize: '9px' }}>
+        <span className={`nxg-badge nxg-badge-${rarityClass.replace('-', '-')}`} style={{ fontSize: '9px', padding: '4px 8px' }}>
           {RARITY_LABELS[card.rarity as Rarity]}
         </span>
       </div>
