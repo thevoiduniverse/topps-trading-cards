@@ -7,22 +7,11 @@ interface Stats {
   total: number;
   available: number;
   sold: number;
-  packed: number;
-  byRarity: Record<string, number>;
-  teams: { team: string; count: number }[];
-  collections: { collection: string; count: number }[];
+  reserved: number;
+  byParallel: Record<string, number>;
+  bySport: { sport: string; count: number }[];
+  byYear: { year: number; count: number }[];
 }
-
-const RARITY_ORDER = ['BRONZE', 'SILVER', 'GOLD', 'RARE_GOLD', 'INFORM', 'HERO', 'ICON'];
-const RARITY_COLORS: Record<string, string> = {
-  BRONZE: '#cd7f32',
-  SILVER: '#c0c0c0',
-  GOLD: '#ffd700',
-  RARE_GOLD: '#ffd700',
-  INFORM: '#ff6b00',
-  HERO: '#00ced1',
-  ICON: '#ffd700',
-};
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -35,8 +24,10 @@ export default function AdminDashboard() {
   const fetchStats = async () => {
     try {
       const res = await fetch('/api/cards/stats');
-      const data = await res.json();
-      setStats(data);
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data);
+      }
     } catch (error) {
       console.error('Failed to fetch stats:', error);
     } finally {
@@ -47,29 +38,30 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[var(--fut-gold)] border-t-transparent" />
+        <div className="loader"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
+    <div className="container py-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-[var(--fut-gold)]" style={{ fontFamily: 'var(--font-bebas)', letterSpacing: '2px' }}>
-            ADMIN DASHBOARD
+          <div className="section-eyebrow">Admin</div>
+          <h1 className="section-title">
+            <span className="section-title-lime">Dashboard</span>
           </h1>
-          <p className="text-[var(--fut-text-secondary)] mt-1">
+          <p className="text-[var(--text-secondary)] mt-1">
             Manage your trading card inventory
           </p>
         </div>
         <div className="flex gap-3">
-          <Link href="/admin/cards" className="fut-btn">
+          <Link href="/admin/cards" className="btn btn-outline">
             Manage Cards
           </Link>
-          <Link href="/admin/packs" className="fut-btn fut-btn-secondary">
-            Manage Packs
+          <Link href="/admin/add" className="btn btn-primary">
+            Add Card
           </Link>
         </div>
       </div>
@@ -106,140 +98,83 @@ export default function AdminDashboard() {
           }
         />
         <StatCard
-          label="In Packs"
-          value={stats?.packed || 0}
-          color="text-purple-400"
+          label="Reserved"
+          value={stats?.reserved || 0}
+          color="text-yellow-400"
           icon={
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           }
         />
       </div>
 
-      {/* Rarity Distribution */}
-      <div className="fut-card p-6 mb-8">
-        <h2 className="text-xl font-bold mb-6 text-[var(--fut-gold)]" style={{ fontFamily: 'var(--font-bebas)', letterSpacing: '1px' }}>
-          AVAILABLE BY RARITY
-        </h2>
-        <div className="grid grid-cols-7 gap-4">
-          {RARITY_ORDER.map((rarity) => {
-            const count = stats?.byRarity[rarity] || 0;
-            const maxCount = Math.max(...Object.values(stats?.byRarity || { x: 1 }));
-            const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
-
-            return (
-              <div key={rarity} className="text-center">
-                <div className="h-32 flex flex-col justify-end mb-2">
-                  <div
-                    className="w-full rounded-t-md transition-all duration-500"
-                    style={{
-                      height: `${Math.max(percentage, 5)}%`,
-                      backgroundColor: RARITY_COLORS[rarity],
-                      opacity: count > 0 ? 1 : 0.3,
-                    }}
-                  />
-                </div>
-                <div className="text-2xl font-bold" style={{ color: RARITY_COLORS[rarity] }}>
-                  {count}
-                </div>
-                <div className="text-xs text-[var(--fut-text-secondary)] uppercase mt-1">
-                  {rarity.replace('_', ' ')}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Collections and Teams */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Collections */}
-        <div className="fut-card p-6">
-          <h2 className="text-xl font-bold mb-4 text-[var(--fut-gold)]" style={{ fontFamily: 'var(--font-bebas)', letterSpacing: '1px' }}>
-            COLLECTIONS
-          </h2>
-          {stats?.collections && stats.collections.length > 0 ? (
-            <div className="space-y-3">
-              {stats.collections.map((col) => (
-                <div key={col.collection} className="flex items-center justify-between">
-                  <span className="text-[var(--fut-text-secondary)]">{col.collection}</span>
-                  <span className="text-[var(--fut-gold)] font-bold">{col.count}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-[var(--fut-text-muted)]">No collections yet</p>
-          )}
-        </div>
-
-        {/* Top Teams */}
-        <div className="fut-card p-6">
-          <h2 className="text-xl font-bold mb-4 text-[var(--fut-gold)]" style={{ fontFamily: 'var(--font-bebas)', letterSpacing: '1px' }}>
-            TOP TEAMS
-          </h2>
-          {stats?.teams && stats.teams.length > 0 ? (
-            <div className="space-y-3">
-              {stats.teams.slice(0, 10).map((team) => (
-                <div key={team.team} className="flex items-center justify-between">
-                  <span className="text-[var(--fut-text-secondary)]">{team.team}</span>
-                  <span className="text-[var(--fut-gold)] font-bold">{team.count}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-[var(--fut-text-muted)]">No teams yet</p>
-          )}
-        </div>
-      </div>
-
       {/* Quick Actions */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Link
-          href="/admin/cards?action=create"
-          className="fut-card p-6 flex items-center gap-4 hover:border-[var(--fut-gold)] transition-colors group"
+          href="/admin/add"
+          className="card p-6 flex items-center gap-4 hover:border-[var(--lime)] transition-colors group"
         >
-          <div className="w-12 h-12 rounded-lg bg-green-900/50 flex items-center justify-center group-hover:bg-green-800/50 transition-colors">
-            <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-12 h-12 rounded-lg bg-[var(--lime-muted)] flex items-center justify-center group-hover:bg-[var(--lime)] transition-colors">
+            <svg className="w-6 h-6 text-lime group-hover:text-[var(--text-on-lime)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
           </div>
           <div>
-            <h3 className="font-bold">Add New Card</h3>
-            <p className="text-sm text-[var(--fut-text-secondary)]">Create a single card</p>
+            <h3 className="font-bold text-white">Add New Card</h3>
+            <p className="text-sm text-muted">Upload a card with images</p>
           </div>
         </Link>
 
         <Link
-          href="/admin/cards?action=bulk"
-          className="fut-card p-6 flex items-center gap-4 hover:border-[var(--fut-gold)] transition-colors group"
+          href="/admin/cards"
+          className="card p-6 flex items-center gap-4 hover:border-[var(--lime)] transition-colors group"
         >
           <div className="w-12 h-12 rounded-lg bg-blue-900/50 flex items-center justify-center group-hover:bg-blue-800/50 transition-colors">
             <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
             </svg>
           </div>
           <div>
-            <h3 className="font-bold">Bulk Import</h3>
-            <p className="text-sm text-[var(--fut-text-secondary)]">Upload multiple cards</p>
+            <h3 className="font-bold text-white">Manage Cards</h3>
+            <p className="text-sm text-muted">Edit or delete existing cards</p>
           </div>
         </Link>
 
         <Link
-          href="/admin/packs?action=create"
-          className="fut-card p-6 flex items-center gap-4 hover:border-[var(--fut-gold)] transition-colors group"
+          href="/store"
+          className="card p-6 flex items-center gap-4 hover:border-[var(--lime)] transition-colors group"
         >
           <div className="w-12 h-12 rounded-lg bg-purple-900/50 flex items-center justify-center group-hover:bg-purple-800/50 transition-colors">
             <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
           </div>
           <div>
-            <h3 className="font-bold">Create Pack</h3>
-            <p className="text-sm text-[var(--fut-text-secondary)]">Define a new pack type</p>
+            <h3 className="font-bold text-white">View Store</h3>
+            <p className="text-sm text-muted">See public marketplace</p>
           </div>
         </Link>
       </div>
+
+      {/* Empty State */}
+      {(!stats || stats.total === 0) && (
+        <div className="card p-12 text-center">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[var(--lime-muted)] flex items-center justify-center">
+            <svg className="w-10 h-10 text-lime" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold text-white mb-2">No Cards Yet</h3>
+          <p className="text-muted mb-6 max-w-md mx-auto">
+            Start building your collection by adding your first trading card with front and back images.
+          </p>
+          <Link href="/admin/add" className="btn btn-primary btn-lg">
+            Add Your First Card
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
@@ -247,7 +182,7 @@ export default function AdminDashboard() {
 function StatCard({
   label,
   value,
-  color = 'text-[var(--fut-gold)]',
+  color = 'text-lime',
   icon,
 }: {
   label: string;
@@ -256,15 +191,15 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="fut-card p-6">
+    <div className="card p-6">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-[var(--fut-text-secondary)] uppercase tracking-wide">{label}</p>
-          <p className={`text-4xl font-bold mt-2 ${color}`} style={{ fontFamily: 'var(--font-bebas)' }}>
+          <p className="text-sm text-muted uppercase tracking-wide">{label}</p>
+          <p className={`text-4xl font-bold mt-2 ${color}`}>
             {value.toLocaleString()}
           </p>
         </div>
-        <div className="text-[var(--fut-text-muted)]">{icon}</div>
+        <div className="text-muted">{icon}</div>
       </div>
     </div>
   );

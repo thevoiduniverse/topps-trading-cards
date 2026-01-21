@@ -2,11 +2,13 @@
 
 import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import PlayerCard from '@/components/PlayerCard';
-import { Card, Rarity, POSITIONS, RARITY_LABELS } from '@/lib/types';
+import TradingCard from '@/components/TradingCard';
+import { Card, PARALLEL_LABELS, COLOR_LABELS, CONDITION_LABELS, COMMON_SETS, formatNumbered, getCardRarityInfo } from '@/lib/types';
 import { useStore } from '@/store/useStore';
+import Image from 'next/image';
 
-const RARITIES: Rarity[] = ['BRONZE', 'SILVER', 'GOLD', 'RARE_GOLD', 'INFORM', 'HERO', 'ICON'];
+const PARALLEL_TYPES = Object.keys(PARALLEL_LABELS);
+const COLOR_VARIANTS = Object.keys(COLOR_LABELS);
 
 function StoreContent() {
   const searchParams = useSearchParams();
@@ -18,14 +20,17 @@ function StoreContent() {
 
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
-    rarity: searchParams.get('rarity') || '',
-    position: searchParams.get('position') || '',
+    parallelType: searchParams.get('parallelType') || '',
+    colorVariant: searchParams.get('colorVariant') || '',
     team: searchParams.get('team') || '',
+    setName: searchParams.get('setName') || '',
+    year: searchParams.get('year') || '',
     minPrice: '',
     maxPrice: '',
-    minRating: '',
-    maxRating: '',
-    sortBy: searchParams.get('sortBy') || 'overall',
+    isNumbered: searchParams.get('isNumbered') || '',
+    isRookie: searchParams.get('isRookie') || '',
+    isAutograph: searchParams.get('isAutograph') || '',
+    sortBy: searchParams.get('sortBy') || 'createdAt',
     sortOrder: searchParams.get('sortOrder') || 'desc',
   });
 
@@ -42,13 +47,16 @@ function StoreContent() {
       const params = new URLSearchParams();
       params.set('status', 'AVAILABLE');
       if (filters.search) params.set('search', filters.search);
-      if (filters.rarity) params.set('rarity', filters.rarity);
-      if (filters.position) params.set('position', filters.position);
+      if (filters.parallelType) params.set('parallelType', filters.parallelType);
+      if (filters.colorVariant) params.set('colorVariant', filters.colorVariant);
       if (filters.team) params.set('team', filters.team);
+      if (filters.setName) params.set('setName', filters.setName);
+      if (filters.year) params.set('year', filters.year);
       if (filters.minPrice) params.set('minPrice', filters.minPrice);
       if (filters.maxPrice) params.set('maxPrice', filters.maxPrice);
-      if (filters.minRating) params.set('minRating', filters.minRating);
-      if (filters.maxRating) params.set('maxRating', filters.maxRating);
+      if (filters.isNumbered === 'true') params.set('isNumbered', 'true');
+      if (filters.isRookie === 'true') params.set('isRookie', 'true');
+      if (filters.isAutograph === 'true') params.set('isAutograph', 'true');
       params.set('sortBy', filters.sortBy);
       params.set('sortOrder', filters.sortOrder);
       params.set('page', pagination.page.toString());
@@ -56,7 +64,7 @@ function StoreContent() {
 
       const res = await fetch(`/api/cards?${params}`);
       const data = await res.json();
-      setCards(data.cards);
+      setCards(data.cards || []);
       setPagination((prev) => ({ ...prev, ...data.pagination }));
     } catch (error) {
       console.error('Failed to fetch cards:', error);
@@ -82,44 +90,50 @@ function StoreContent() {
   const clearFilters = () => {
     setFilters({
       search: '',
-      rarity: '',
-      position: '',
+      parallelType: '',
+      colorVariant: '',
       team: '',
+      setName: '',
+      year: '',
       minPrice: '',
       maxPrice: '',
-      minRating: '',
-      maxRating: '',
-      sortBy: 'overall',
+      isNumbered: '',
+      isRookie: '',
+      isAutograph: '',
+      sortBy: 'createdAt',
       sortOrder: 'desc',
     });
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 30 }, (_, i) => currentYear - i);
+
   return (
-    <div className="min-h-screen bg-[var(--nxg-bg-primary)]">
+    <div className="min-h-screen bg-[var(--bg-primary)]">
       {/* Header */}
-      <div className="bg-[var(--nxg-bg-secondary)] border-b border-[var(--nxg-border)]">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <span className="nxg-badge nxg-badge-lime mb-4 inline-block">Browse</span>
-          <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
-            Marketplace
+      <div className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+        <div className="container py-12">
+          <div className="section-eyebrow">Browse</div>
+          <h1 className="section-title">
+            <span className="section-title-lime">Marketplace</span>
           </h1>
-          <p className="text-[var(--nxg-text-secondary)] mt-3 text-lg">
+          <p className="text-[var(--text-secondary)] mt-3 text-lg">
             {pagination.total} cards available for purchase
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="container py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
           <div className="lg:w-72 flex-shrink-0">
-            <div className="glass-card p-6 sticky top-24">
+            <div className="sidebar sticky top-24">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold text-white">Filters</h2>
                 <button
                   onClick={clearFilters}
-                  className="text-sm text-[var(--nxg-text-muted)] hover:text-[var(--nxg-lime)] transition-colors"
+                  className="text-sm text-muted hover:text-lime transition-colors"
                 >
                   Clear all
                 </button>
@@ -127,110 +141,149 @@ function StoreContent() {
 
               <div className="space-y-5">
                 {/* Search */}
-                <div>
-                  <label className="block text-sm font-medium text-[var(--nxg-text-secondary)] mb-2">Search</label>
+                <div className="filter-group">
+                  <label className="label">Search</label>
                   <input
                     type="text"
                     placeholder="Player, team..."
-                    className="nxg-input"
+                    className="input"
                     value={filters.search}
                     onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
                   />
                 </div>
 
-                {/* Rarity */}
-                <div>
-                  <label className="block text-sm font-medium text-[var(--nxg-text-secondary)] mb-2">Rarity</label>
+                {/* Parallel Type */}
+                <div className="filter-group">
+                  <label className="label">Parallel Type</label>
                   <select
-                    className="nxg-select w-full"
-                    value={filters.rarity}
-                    onChange={(e) => setFilters((f) => ({ ...f, rarity: e.target.value }))}
+                    className="select"
+                    value={filters.parallelType}
+                    onChange={(e) => setFilters((f) => ({ ...f, parallelType: e.target.value }))}
                   >
-                    <option value="">All Rarities</option>
-                    {RARITIES.map((r) => (
-                      <option key={r} value={r}>{RARITY_LABELS[r]}</option>
+                    <option value="">All Parallels</option>
+                    {PARALLEL_TYPES.map((p) => (
+                      <option key={p} value={p}>{PARALLEL_LABELS[p]}</option>
                     ))}
                   </select>
                 </div>
 
-                {/* Position */}
-                <div>
-                  <label className="block text-sm font-medium text-[var(--nxg-text-secondary)] mb-2">Position</label>
+                {/* Color Variant */}
+                <div className="filter-group">
+                  <label className="label">Color Variant</label>
                   <select
-                    className="nxg-select w-full"
-                    value={filters.position}
-                    onChange={(e) => setFilters((f) => ({ ...f, position: e.target.value }))}
+                    className="select"
+                    value={filters.colorVariant}
+                    onChange={(e) => setFilters((f) => ({ ...f, colorVariant: e.target.value }))}
                   >
-                    <option value="">All Positions</option>
-                    {POSITIONS.map((p) => (
-                      <option key={p} value={p}>{p}</option>
+                    <option value="">All Colors</option>
+                    {COLOR_VARIANTS.map((c) => (
+                      <option key={c} value={c}>{COLOR_LABELS[c]}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Set Name */}
+                <div className="filter-group">
+                  <label className="label">Set</label>
+                  <select
+                    className="select"
+                    value={filters.setName}
+                    onChange={(e) => setFilters((f) => ({ ...f, setName: e.target.value }))}
+                  >
+                    <option value="">All Sets</option>
+                    {COMMON_SETS.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Year */}
+                <div className="filter-group">
+                  <label className="label">Year</label>
+                  <select
+                    className="select"
+                    value={filters.year}
+                    onChange={(e) => setFilters((f) => ({ ...f, year: e.target.value }))}
+                  >
+                    <option value="">All Years</option>
+                    {years.map((y) => (
+                      <option key={y} value={y}>{y}</option>
                     ))}
                   </select>
                 </div>
 
                 {/* Price Range */}
-                <div>
-                  <label className="block text-sm font-medium text-[var(--nxg-text-secondary)] mb-2">Price Range</label>
+                <div className="filter-group">
+                  <label className="label">Price Range</label>
                   <div className="flex gap-3">
                     <input
                       type="number"
                       placeholder="Min"
-                      className="nxg-input"
+                      className="input"
                       value={filters.minPrice}
                       onChange={(e) => setFilters((f) => ({ ...f, minPrice: e.target.value }))}
                     />
                     <input
                       type="number"
                       placeholder="Max"
-                      className="nxg-input"
+                      className="input"
                       value={filters.maxPrice}
                       onChange={(e) => setFilters((f) => ({ ...f, maxPrice: e.target.value }))}
                     />
                   </div>
                 </div>
 
-                {/* Rating Range */}
-                <div>
-                  <label className="block text-sm font-medium text-[var(--nxg-text-secondary)] mb-2">Rating</label>
-                  <div className="flex gap-3">
-                    <input
-                      type="number"
-                      placeholder="Min"
-                      min="1"
-                      max="99"
-                      className="nxg-input"
-                      value={filters.minRating}
-                      onChange={(e) => setFilters((f) => ({ ...f, minRating: e.target.value }))}
-                    />
-                    <input
-                      type="number"
-                      placeholder="Max"
-                      min="1"
-                      max="99"
-                      className="nxg-input"
-                      value={filters.maxRating}
-                      onChange={(e) => setFilters((f) => ({ ...f, maxRating: e.target.value }))}
-                    />
+                {/* Special Filters */}
+                <div className="filter-group">
+                  <label className="label">Special</label>
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="checkbox"
+                        checked={filters.isNumbered === 'true'}
+                        onChange={(e) => setFilters((f) => ({ ...f, isNumbered: e.target.checked ? 'true' : '' }))}
+                      />
+                      <span className="text-sm text-[var(--text-secondary)]">Numbered Cards</span>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="checkbox"
+                        checked={filters.isRookie === 'true'}
+                        onChange={(e) => setFilters((f) => ({ ...f, isRookie: e.target.checked ? 'true' : '' }))}
+                      />
+                      <span className="text-sm text-[var(--text-secondary)]">Rookie Cards</span>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="checkbox"
+                        checked={filters.isAutograph === 'true'}
+                        onChange={(e) => setFilters((f) => ({ ...f, isAutograph: e.target.checked ? 'true' : '' }))}
+                      />
+                      <span className="text-sm text-[var(--text-secondary)]">Autographs</span>
+                    </label>
                   </div>
                 </div>
 
                 {/* Sort */}
-                <div>
-                  <label className="block text-sm font-medium text-[var(--nxg-text-secondary)] mb-2">Sort By</label>
+                <div className="filter-group">
+                  <label className="label">Sort By</label>
                   <select
-                    className="nxg-select w-full"
+                    className="select"
                     value={`${filters.sortBy}-${filters.sortOrder}`}
                     onChange={(e) => {
                       const [sortBy, sortOrder] = e.target.value.split('-');
                       setFilters((f) => ({ ...f, sortBy, sortOrder }));
                     }}
                   >
-                    <option value="overall-desc">Rating: High to Low</option>
-                    <option value="overall-asc">Rating: Low to High</option>
+                    <option value="createdAt-desc">Newest First</option>
                     <option value="price-asc">Price: Low to High</option>
                     <option value="price-desc">Price: High to Low</option>
-                    <option value="playerName-asc">Name: A to Z</option>
-                    <option value="createdAt-desc">Newest First</option>
+                    <option value="playerName-asc">Player: A to Z</option>
+                    <option value="year-desc">Year: Newest</option>
+                    <option value="year-asc">Year: Oldest</option>
                   </select>
                 </div>
               </div>
@@ -241,25 +294,25 @@ function StoreContent() {
           <div className="flex-1">
             {loading ? (
               <div className="flex items-center justify-center min-h-[50vh]">
-                <div className="w-12 h-12 rounded-full border-3 border-[var(--nxg-lime)] border-t-transparent animate-spin" />
+                <div className="loader"></div>
               </div>
             ) : cards.length === 0 ? (
-              <div className="text-center py-20 glass-card">
-                <svg className="w-20 h-20 mx-auto text-[var(--nxg-text-muted)] mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="empty-state card">
+                <svg className="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <h3 className="text-2xl font-semibold text-white mb-2">No cards found</h3>
-                <p className="text-[var(--nxg-text-secondary)] mb-6">Try adjusting your filters</p>
-                <button onClick={clearFilters} className="nxg-btn">
+                <h3 className="empty-state-title">No cards found</h3>
+                <p className="empty-state-text">Try adjusting your filters</p>
+                <button onClick={clearFilters} className="btn btn-primary">
                   Clear Filters
                 </button>
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-5">
+                <div className="cards-grid">
                   {cards.map((card) => (
                     <div key={card.id} className="relative group">
-                      <PlayerCard
+                      <TradingCard
                         card={card}
                         size="sm"
                         showPrice
@@ -271,7 +324,7 @@ function StoreContent() {
                           handleAddToCart(card);
                         }}
                         disabled={isInCart(card.id)}
-                        className="absolute bottom-4 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity nxg-btn py-2.5 px-5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="absolute bottom-20 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity btn btn-primary btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isInCart(card.id) ? 'In Cart' : 'Add to Cart'}
                       </button>
@@ -285,17 +338,17 @@ function StoreContent() {
                     <button
                       onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                       disabled={pagination.page <= 1}
-                      className="nxg-btn nxg-btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="btn btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Previous
                     </button>
-                    <span className="text-[var(--nxg-text-secondary)] font-medium">
+                    <span className="text-[var(--text-secondary)] font-medium">
                       Page {pagination.page} of {pagination.totalPages}
                     </span>
                     <button
                       onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                       disabled={pagination.page >= pagination.totalPages}
-                      className="nxg-btn nxg-btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="btn btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Next
                     </button>
@@ -309,57 +362,104 @@ function StoreContent() {
 
       {/* Card Detail Modal */}
       {selectedCard && (
-        <div className="nxg-modal-overlay" onClick={() => setSelectedCard(null)}>
-          <div className="nxg-modal max-w-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex flex-col md:flex-row gap-8">
-              {/* Card Preview */}
-              <div className="flex-shrink-0 flex justify-center">
-                <PlayerCard card={selectedCard} size="lg" showStats />
-              </div>
+        <div className="modal-overlay" onClick={() => setSelectedCard(null)}>
+          <div className="modal max-w-3xl" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="text-xl font-bold text-white">{selectedCard.playerName}</h2>
+              <button
+                onClick={() => setSelectedCard(null)}
+                className="p-2 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
+              >
+                <svg className="w-5 h-5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-              {/* Card Details */}
-              <div className="flex-1">
-                <h2 className="text-3xl font-bold text-white mb-2">{selectedCard.playerName}</h2>
-                <p className="text-[var(--nxg-text-secondary)] mb-6">
-                  {selectedCard.team} • {selectedCard.nation}
-                </p>
-
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div>
-                    <p className="text-sm text-[var(--nxg-text-muted)] mb-1">Position</p>
-                    <p className="font-semibold text-white">{selectedCard.position}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-[var(--nxg-text-muted)] mb-1">Collection</p>
-                    <p className="font-semibold text-white">{selectedCard.collection}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-[var(--nxg-text-muted)] mb-1">Rarity</p>
-                    <span className={`nxg-badge nxg-badge-${selectedCard.rarity.toLowerCase().replace('_', '-')}`}>
-                      {RARITY_LABELS[selectedCard.rarity as Rarity]}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm text-[var(--nxg-text-muted)] mb-1">Rating</p>
-                    <p className="text-2xl font-bold text-[var(--nxg-lime)]">{selectedCard.overall}</p>
-                  </div>
+            <div className="modal-body">
+              <div className="flex flex-col md:flex-row gap-8">
+                {/* Card Images */}
+                <div className="flex-shrink-0 flex flex-col gap-4 items-center">
+                  <TradingCard card={selectedCard} size="lg" />
                 </div>
 
-                <div className="border-t border-[var(--nxg-border)] pt-6">
-                  <div className="flex items-center justify-between mb-5">
-                    <span className="text-[var(--nxg-text-muted)]">Price</span>
-                    <span className="text-3xl font-bold text-[var(--nxg-lime)]">
-                      ${selectedCard.price.toLocaleString()}
-                    </span>
+                {/* Card Details */}
+                <div className="flex-1">
+                  <div className="mb-6">
+                    <p className="text-[var(--text-secondary)] mb-2">
+                      {selectedCard.year} {selectedCard.setName}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedCard.parallelType !== 'BASE' && (
+                        <span className="badge badge-refractor">
+                          {PARALLEL_LABELS[selectedCard.parallelType] || selectedCard.parallelType}
+                        </span>
+                      )}
+                      {selectedCard.colorVariant && (
+                        <span className="badge badge-outline">
+                          {COLOR_LABELS[selectedCard.colorVariant] || selectedCard.colorVariant}
+                        </span>
+                      )}
+                      {selectedCard.isNumbered && selectedCard.printRun && (
+                        <span className="badge badge-numbered">
+                          {formatNumbered(selectedCard.serialNumber, selectedCard.printRun)}
+                        </span>
+                      )}
+                      {selectedCard.isRookie && (
+                        <span className="badge badge-rookie">RC</span>
+                      )}
+                      {selectedCard.isAutograph && (
+                        <span className="badge badge-auto">AUTO</span>
+                      )}
+                    </div>
                   </div>
 
-                  <button
-                    onClick={() => handleAddToCart(selectedCard)}
-                    disabled={isInCart(selectedCard.id)}
-                    className="nxg-btn w-full text-lg py-4 disabled:opacity-50"
-                  >
-                    {isInCart(selectedCard.id) ? 'Already in Cart' : 'Add to Cart'}
-                  </button>
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                      <p className="text-sm text-muted mb-1">Team</p>
+                      <p className="font-semibold text-white">{selectedCard.team}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted mb-1">Sport</p>
+                      <p className="font-semibold text-white">{selectedCard.sport}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted mb-1">Condition</p>
+                      <p className="font-semibold text-white">
+                        {CONDITION_LABELS[selectedCard.condition] || selectedCard.condition}
+                      </p>
+                    </div>
+                    {selectedCard.cardNumber && (
+                      <div>
+                        <p className="text-sm text-muted mb-1">Card #</p>
+                        <p className="font-semibold text-white">{selectedCard.cardNumber}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedCard.conditionNotes && (
+                    <div className="mb-6">
+                      <p className="text-sm text-muted mb-1">Condition Notes</p>
+                      <p className="text-[var(--text-secondary)]">{selectedCard.conditionNotes}</p>
+                    </div>
+                  )}
+
+                  <div className="border-t border-[var(--border)] pt-6">
+                    <div className="flex items-center justify-between mb-5">
+                      <span className="text-muted">Price</span>
+                      <span className="text-3xl font-bold text-lime">
+                        ${selectedCard.price.toLocaleString()}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => handleAddToCart(selectedCard)}
+                      disabled={isInCart(selectedCard.id)}
+                      className="btn btn-primary w-full text-lg py-4 disabled:opacity-50"
+                    >
+                      {isInCart(selectedCard.id) ? 'Already in Cart' : 'Add to Cart'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -374,7 +474,7 @@ export default function StorePage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-12 h-12 rounded-full border-3 border-[var(--nxg-lime)] border-t-transparent animate-spin" />
+        <div className="loader"></div>
       </div>
     }>
       <StoreContent />

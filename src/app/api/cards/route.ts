@@ -7,15 +7,18 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
 
     const status = searchParams.get('status');
-    const rarity = searchParams.get('rarity');
+    const parallelType = searchParams.get('parallelType');
+    const colorVariant = searchParams.get('colorVariant');
     const team = searchParams.get('team');
-    const collection = searchParams.get('collection');
-    const position = searchParams.get('position');
+    const setName = searchParams.get('setName');
+    const year = searchParams.get('year');
+    const sport = searchParams.get('sport');
     const search = searchParams.get('search');
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
-    const minRating = searchParams.get('minRating');
-    const maxRating = searchParams.get('maxRating');
+    const isNumbered = searchParams.get('isNumbered');
+    const isRookie = searchParams.get('isRookie');
+    const isAutograph = searchParams.get('isAutograph');
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     const page = parseInt(searchParams.get('page') || '1');
@@ -24,26 +27,28 @@ export async function GET(request: NextRequest) {
     const where: Record<string, unknown> = {};
 
     if (status) where.status = status;
-    if (rarity) where.rarity = rarity;
+    if (parallelType) where.parallelType = parallelType;
+    if (colorVariant) where.colorVariant = colorVariant;
     if (team) where.team = { contains: team };
-    if (collection) where.collection = collection;
-    if (position) where.position = position;
+    if (setName) where.setName = { contains: setName };
+    if (year) where.year = parseInt(year);
+    if (sport) where.sport = sport;
+    if (isNumbered === 'true') where.isNumbered = true;
+    if (isRookie === 'true') where.isRookie = true;
+    if (isAutograph === 'true') where.isAutograph = true;
+
     if (search) {
       where.OR = [
         { playerName: { contains: search } },
         { team: { contains: search } },
-        { nation: { contains: search } },
+        { setName: { contains: search } },
       ];
     }
+
     if (minPrice || maxPrice) {
       where.price = {};
       if (minPrice) (where.price as Record<string, number>).gte = parseFloat(minPrice);
       if (maxPrice) (where.price as Record<string, number>).lte = parseFloat(maxPrice);
-    }
-    if (minRating || maxRating) {
-      where.overall = {};
-      if (minRating) (where.overall as Record<string, number>).gte = parseInt(minRating);
-      if (maxRating) (where.overall as Record<string, number>).lte = parseInt(maxRating);
     }
 
     const orderBy: Record<string, string> = {};
@@ -82,20 +87,26 @@ export async function POST(request: NextRequest) {
     const card = await prisma.card.create({
       data: {
         playerName: body.playerName,
-        position: body.position,
         team: body.team,
-        nation: body.nation,
-        overall: body.overall,
-        pace: body.pace,
-        shooting: body.shooting,
-        passing: body.passing,
-        dribbling: body.dribbling,
-        defending: body.defending,
-        physical: body.physical,
-        rarity: body.rarity,
-        collection: body.collection,
-        imageUrl: body.imageUrl || null,
-        price: body.price,
+        sport: body.sport || 'Football',
+        year: parseInt(body.year),
+        setName: body.setName,
+        cardNumber: body.cardNumber || null,
+        frontImageUrl: body.frontImageUrl || null,
+        backImageUrl: body.backImageUrl || null,
+        parallelType: body.parallelType || 'BASE',
+        colorVariant: body.colorVariant || null,
+        isNumbered: body.isNumbered || false,
+        printRun: body.printRun ? parseInt(body.printRun) : null,
+        serialNumber: body.serialNumber ? parseInt(body.serialNumber) : null,
+        isRookie: body.isRookie || false,
+        isAutograph: body.isAutograph || false,
+        isRelic: body.isRelic || false,
+        isShortPrint: body.isShortPrint || false,
+        isVariation: body.isVariation || false,
+        condition: body.condition || 'NEAR_MINT',
+        conditionNotes: body.conditionNotes || null,
+        price: parseFloat(body.price),
         status: 'AVAILABLE',
       },
     });

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Card, PackTemplate } from '@/lib/types';
+import { Card } from '@/lib/types';
 
 interface CartItem {
   id: string;
@@ -18,14 +18,6 @@ interface CartState {
   clearCart: () => void;
 }
 
-interface PackOpeningState {
-  isOpening: boolean;
-  revealedCards: Card[];
-  currentPackId: string | null;
-  openPack: (packTemplateId: string, email: string, name?: string) => Promise<Card[] | null>;
-  resetPackOpening: () => void;
-}
-
 interface UIState {
   isCartOpen: boolean;
   toggleCart: () => void;
@@ -34,7 +26,7 @@ interface UIState {
   clearNotification: () => void;
 }
 
-interface StoreState extends CartState, PackOpeningState, UIState {}
+interface StoreState extends CartState, UIState {}
 
 export const useStore = create<StoreState>((set, get) => ({
   // Cart state
@@ -113,43 +105,6 @@ export const useStore = create<StoreState>((set, get) => ({
 
   clearCart: () => {
     set({ items: [], total: 0, expiresAt: null });
-  },
-
-  // Pack opening state
-  isOpening: false,
-  revealedCards: [],
-  currentPackId: null,
-
-  openPack: async (packTemplateId: string, email: string, name?: string) => {
-    set({ isOpening: true, currentPackId: packTemplateId, revealedCards: [] });
-
-    try {
-      const res = await fetch('/api/packs/open', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packTemplateId, buyerEmail: email, buyerName: name }),
-      });
-
-      if (!res.ok) {
-        const error = await res.json();
-        get().showNotification(error.error || 'Failed to open pack', 'error');
-        set({ isOpening: false });
-        return null;
-      }
-
-      const data = await res.json();
-      set({ revealedCards: data.cards });
-      return data.cards;
-    } catch (error) {
-      console.error('Failed to open pack:', error);
-      get().showNotification('Failed to open pack', 'error');
-      set({ isOpening: false });
-      return null;
-    }
-  },
-
-  resetPackOpening: () => {
-    set({ isOpening: false, revealedCards: [], currentPackId: null });
   },
 
   // UI state

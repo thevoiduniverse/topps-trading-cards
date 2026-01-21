@@ -9,117 +9,71 @@ datasource db {
 
 // Individual card in inventory - each row is a unique physical card
 model Card {
-  id            String      @id @default(uuid())
+  id              String      @id @default(uuid())
 
-  // Player info
-  playerName    String
-  position      String      // GK, CB, LB, RB, CDM, CM, CAM, LW, RW, ST
-  team          String
-  nation        String
+  // Player/Subject info
+  playerName      String
+  team            String
+  sport           String      @default("Football") // Football, Baseball, Basketball, etc.
 
-  // Card attributes (FUT style ratings)
-  overall       Int         // Overall rating 1-99
-  pace          Int
-  shooting      Int
-  passing       Int
-  dribbling     Int
-  defending     Int
-  physical      Int
+  // Card set info
+  year            Int         // e.g., 2024, 2025
+  setName         String      // e.g., "Topps Chrome", "Topps Finest", "Bowman Chrome"
+  cardNumber      String?     // Card number in the set (e.g., "RC-1", "150")
 
-  // Card metadata
-  rarity        String      @default("BRONZE") // BRONZE, SILVER, GOLD, RARE_GOLD, INFORM, ICON, HERO
-  collection    String      // e.g., "Base 2024", "Team of the Week", "Icons"
-  imageUrl      String?
+  // Images - front and back
+  frontImageUrl   String?
+  backImageUrl    String?
+
+  // Parallel/Variant info (Topps system)
+  parallelType    String      @default("BASE") // BASE, REFRACTOR, PRISM_REFRACTOR, XFRACTOR, etc.
+  colorVariant    String?     // Blue, Green, Gold, Orange, Black, Red, Purple, Pink, etc.
+
+  // Numbered cards
+  isNumbered      Boolean     @default(false)
+  printRun        Int?        // Total print run (e.g., 99, 50, 25, 10, 5, 1)
+  serialNumber    Int?        // This card's number (e.g., 45 of 99)
+
+  // Special designations
+  isRookie        Boolean     @default(false)
+  isAutograph     Boolean     @default(false)
+  isRelic         Boolean     @default(false) // Memorabilia card
+  isShortPrint    Boolean     @default(false)
+  isVariation     Boolean     @default(false) // Photo variation
+
+  // Condition
+  condition       String      @default("NEAR_MINT") // MINT, NEAR_MINT, EXCELLENT, GOOD, FAIR, POOR
+  conditionNotes  String?
 
   // Pricing and status
-  price         Float
-  status        String      @default("AVAILABLE") // AVAILABLE, RESERVED, SOLD, PACKED
+  price           Float
+  status          String      @default("AVAILABLE") // AVAILABLE, RESERVED, SOLD
 
   // Timestamps
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   // Relations
-  cartItems     CartItem[]
-  orderItems    OrderItem[]
-  packCards     PackCard[]
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
 
   @@index([status])
-  @@index([rarity])
+  @@index([parallelType])
   @@index([team])
   @@index([playerName])
-  @@index([collection])
-}
-
-// Pack template - defines what a pack contains
-model PackTemplate {
-  id                String    @id @default(uuid())
-  name              String    // e.g., "Gold Pack", "Premium Gold Pack"
-  description       String?
-  price             Float
-  imageUrl          String?
-
-  // Pack contents configuration (JSON string for SQLite)
-  // Format: [{"rarity": "GOLD", "count": 3, "guaranteedMin": 1}, ...]
-  rarityDistribution String   // JSON string
-  totalCards        Int       // Total cards in pack
-
-  isActive          Boolean   @default(true)
-
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-
-  packPurchases     PackPurchase[]
-}
-
-// When a user buys and opens a pack
-model PackPurchase {
-  id              String        @id @default(uuid())
-
-  packTemplateId  String
-  packTemplate    PackTemplate  @relation(fields: [packTemplateId], references: [id])
-
-  // Buyer info (simplified - no auth for now)
-  buyerEmail      String
-  buyerName       String?
-
-  // Payment (for future Stripe integration)
-  stripePaymentId String?
-  paidAmount      Float
-
-  // Status
-  status          String        @default("PENDING") // PENDING, COMPLETED, FAILED
-  openedAt        DateTime?
-
-  createdAt       DateTime      @default(now())
-
-  // Cards received in this pack
-  packCards       PackCard[]
-}
-
-// Junction table for cards received in a pack
-model PackCard {
-  id              String        @id @default(uuid())
-
-  packPurchaseId  String
-  packPurchase    PackPurchase  @relation(fields: [packPurchaseId], references: [id])
-
-  cardId          String
-  card            Card          @relation(fields: [cardId], references: [id])
-
-  createdAt       DateTime      @default(now())
-
-  @@unique([packPurchaseId, cardId])
+  @@index([setName])
+  @@index([year])
+  @@index([isNumbered])
 }
 
 // Shopping cart
 model Cart {
   id          String      @id @default(uuid())
-  sessionId   String      @unique // Browser session ID
+  sessionId   String      @unique
 
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-  expiresAt   DateTime    // Cart expiration for reserved items
+  expiresAt   DateTime
 
   items       CartItem[]
 }
@@ -142,14 +96,13 @@ model CartItem {
 model Order {
   id              String      @id @default(uuid())
 
-  // Buyer info
   buyerEmail      String
   buyerName       String?
+  shippingAddress String?
 
-  // Payment
   stripePaymentId String?
   totalAmount     Float
-  status          String      @default("PENDING") // PENDING, COMPLETED, FAILED, REFUNDED
+  status          String      @default("PENDING") // PENDING, PAID, SHIPPED, DELIVERED, CANCELLED
 
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
@@ -166,7 +119,7 @@ model OrderItem {
   cardId      String
   card        Card      @relation(fields: [cardId], references: [id])
 
-  pricePaid   Float     // Price at time of purchase
+  pricePaid   Float
 
   createdAt   DateTime  @default(now())
 
