@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Individual card in inventory - each row is a unique physical card
+model Card {
+  id            String      @id @default(uuid())
+
+  // Player info
+  playerName    String
+  position      String      // GK, CB, LB, RB, CDM, CM, CAM, LW, RW, ST
+  team          String
+  nation        String
+
+  // Card attributes (FUT style ratings)
+  overall       Int         // Overall rating 1-99
+  pace          Int
+  shooting      Int
+  passing       Int
+  dribbling     Int
+  defending     Int
+  physical      Int
+
+  // Card metadata
+  rarity        String      @default("BRONZE") // BRONZE, SILVER, GOLD, RARE_GOLD, INFORM, ICON, HERO
+  collection    String      // e.g., "Base 2024", "Team of the Week", "Icons"
+  imageUrl      String?
+
+  // Pricing and status
+  price         Float
+  status        String      @default("AVAILABLE") // AVAILABLE, RESERVED, SOLD, PACKED
+
+  // Timestamps
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  packCards     PackCard[]
+
+  @@index([status])
+  @@index([rarity])
+  @@index([team])
+  @@index([playerName])
+  @@index([collection])
+}
+
+// Pack template - defines what a pack contains
+model PackTemplate {
+  id                String    @id @default(uuid())
+  name              String    // e.g., "Gold Pack", "Premium Gold Pack"
+  description       String?
+  price             Float
+  imageUrl          String?
+
+  // Pack contents configuration (JSON string for SQLite)
+  // Format: [{"rarity": "GOLD", "count": 3, "guaranteedMin": 1}, ...]
+  rarityDistribution String   // JSON string
+  totalCards        Int       // Total cards in pack
+
+  isActive          Boolean   @default(true)
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  packPurchases     PackPurchase[]
+}
+
+// When a user buys and opens a pack
+model PackPurchase {
+  id              String        @id @default(uuid())
+
+  packTemplateId  String
+  packTemplate    PackTemplate  @relation(fields: [packTemplateId], references: [id])
+
+  // Buyer info (simplified - no auth for now)
+  buyerEmail      String
+  buyerName       String?
+
+  // Payment (for future Stripe integration)
+  stripePaymentId String?
+  paidAmount      Float
+
+  // Status
+  status          String        @default("PENDING") // PENDING, COMPLETED, FAILED
+  openedAt        DateTime?
+
+  createdAt       DateTime      @default(now())
+
+  // Cards received in this pack
+  packCards       PackCard[]
+}
+
+// Junction table for cards received in a pack
+model PackCard {
+  id              String        @id @default(uuid())
+
+  packPurchaseId  String
+  packPurchase    PackPurchase  @relation(fields: [packPurchaseId], references: [id])
+
+  cardId          String
+  card            Card          @relation(fields: [cardId], references: [id])
+
+  createdAt       DateTime      @default(now())
+
+  @@unique([packPurchaseId, cardId])
+}
+
+// Shopping cart
+model Cart {
+  id          String      @id @default(uuid())
+  sessionId   String      @unique // Browser session ID
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  expiresAt   DateTime    // Cart expiration for reserved items
+
+  items       CartItem[]
+}
+
+model CartItem {
+  id        String    @id @default(uuid())
+
+  cartId    String
+  cart      Cart      @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  cardId    String
+  card      Card      @relation(fields: [cardId], references: [id])
+
+  addedAt   DateTime  @default(now())
+
+  @@unique([cartId, cardId])
+}
+
+// Orders for direct card purchases
+model Order {
+  id              String      @id @default(uuid())
+
+  // Buyer info
+  buyerEmail      String
+  buyerName       String?
+
+  // Payment
+  stripePaymentId String?
+  totalAmount     Float
+  status          String      @default("PENDING") // PENDING, COMPLETED, FAILED, REFUNDED
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  items           OrderItem[]
+}
+
+model OrderItem {
+  id          String    @id @default(uuid())
+
+  orderId     String
+  order       Order     @relation(fields: [orderId], references: [id])
+
+  cardId      String
+  card        Card      @relation(fields: [cardId], references: [id])
+
+  pricePaid   Float     // Price at time of purchase
+
+  createdAt   DateTime  @default(now())
+
+  @@unique([orderId, cardId])
+}

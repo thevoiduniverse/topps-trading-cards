@@ -1,26 +1,425 @@
 @import "tailwindcss";
 
+/* FUT Ultimate Team Inspired Theme */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Core colors - Dark with gold accents */
+  --fut-bg-dark: #0d0d12;
+  --fut-bg-card: #14141f;
+  --fut-bg-card-hover: #1a1a2a;
+  --fut-bg-panel: #1c1c2b;
+  --fut-bg-input: #0a0a10;
+
+  /* Gold accents */
+  --fut-gold: #d4af37;
+  --fut-gold-light: #f4d03f;
+  --fut-gold-dark: #996515;
+
+  /* Text colors */
+  --fut-text-primary: #ffffff;
+  --fut-text-secondary: #8a8a9a;
+  --fut-text-muted: #5a5a6a;
+
+  /* Rarity colors */
+  --rarity-bronze: #cd7f32;
+  --rarity-bronze-bg: #3d2914;
+  --rarity-silver: #c0c0c0;
+  --rarity-silver-bg: #2a2a2f;
+  --rarity-gold: #ffd700;
+  --rarity-gold-bg: #3d3010;
+  --rarity-rare-gold: #ffd700;
+  --rarity-rare-gold-bg: #1a1a2e;
+  --rarity-inform: #000000;
+  --rarity-inform-bg: #1a1a1a;
+  --rarity-icon: #ffd700;
+  --rarity-icon-bg: #2d1f47;
+  --rarity-hero: #00ced1;
+  --rarity-hero-bg: #0d3b45;
+
+  /* Borders */
+  --fut-border: #2a2a3a;
+  --fut-border-gold: rgba(212, 175, 55, 0.3);
+
+  /* Shadows */
+  --fut-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  --fut-shadow-gold: 0 0 30px rgba(212, 175, 55, 0.15);
+
+  /* Gradients */
+  --fut-gradient-gold: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%);
+  --fut-gradient-dark: linear-gradient(180deg, #14141f 0%, #0d0d12 100%);
+  --fut-gradient-card: linear-gradient(145deg, #1c1c2b 0%, #14141f 100%);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--fut-bg-dark);
+  --color-foreground: var(--fut-text-primary);
+  --font-sans: var(--font-rajdhani);
+  --font-display: var(--font-bebas);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--fut-bg-dark);
+  color: var(--fut-text-primary);
+  min-height: 100vh;
+}
+
+/* FUT Card Component */
+.fut-card {
+  background: var(--fut-gradient-card);
+  border: 1px solid var(--fut-border);
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.fut-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--fut-gradient-gold);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.fut-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--fut-border-gold);
+  box-shadow: var(--fut-shadow-gold);
+}
+
+.fut-card:hover::before {
+  opacity: 1;
+}
+
+/* Player Card Styling */
+.player-card {
+  width: 200px;
+  height: 300px;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.player-card.bronze {
+  background: linear-gradient(165deg, #cd7f32 0%, #8B4513 50%, #5a3a1a 100%);
+  box-shadow: 0 8px 32px rgba(205, 127, 50, 0.3);
+}
+
+.player-card.silver {
+  background: linear-gradient(165deg, #e8e8e8 0%, #a8a8b0 50%, #71797E 100%);
+  box-shadow: 0 8px 32px rgba(192, 192, 192, 0.3);
+}
+
+.player-card.gold {
+  background: linear-gradient(165deg, #ffd700 0%, #daa520 50%, #B8860B 100%);
+  box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3);
+}
+
+.player-card.rare-gold {
+  background: linear-gradient(165deg, #1a1a2e 0%, #2d2d4a 30%, #1a1a2e 100%);
+  border: 2px solid #ffd700;
+  box-shadow: 0 8px 32px rgba(255, 215, 0, 0.4), inset 0 0 60px rgba(255, 215, 0, 0.1);
+}
+
+.player-card.inform {
+  background: linear-gradient(165deg, #1a1a1a 0%, #2a2a2a 50%, #0a0a0a 100%);
+  border: 2px solid #ff6b00;
+  box-shadow: 0 8px 32px rgba(255, 107, 0, 0.3);
+}
+
+.player-card.icon {
+  background: linear-gradient(165deg, #2d1f47 0%, #4a3570 30%, #2d1f47 100%);
+  border: 2px solid #ffd700;
+  box-shadow: 0 8px 32px rgba(212, 175, 55, 0.4), inset 0 0 60px rgba(255, 215, 0, 0.15);
+}
+
+.player-card.hero {
+  background: linear-gradient(165deg, #0d3b45 0%, #1a5a6a 30%, #0d3b45 100%);
+  border: 2px solid #00ced1;
+  box-shadow: 0 8px 32px rgba(0, 206, 209, 0.4);
+}
+
+.player-card:hover {
+  transform: translateY(-8px) scale(1.02);
+}
+
+/* Stat bars */
+.stat-bar {
+  height: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* Buttons */
+.fut-btn {
+  background: var(--fut-gradient-gold);
+  color: #000;
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 14px;
+}
+
+.fut-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4);
+}
+
+.fut-btn:active {
+  transform: translateY(0);
+}
+
+.fut-btn-secondary {
+  background: transparent;
+  border: 2px solid var(--fut-gold);
+  color: var(--fut-gold);
+}
+
+.fut-btn-secondary:hover {
+  background: rgba(212, 175, 55, 0.1);
+}
+
+/* Input styling */
+.fut-input {
+  background: var(--fut-bg-input);
+  border: 1px solid var(--fut-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--fut-text-primary);
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.fut-input:focus {
+  outline: none;
+  border-color: var(--fut-gold);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+.fut-input::placeholder {
+  color: var(--fut-text-muted);
+}
+
+/* Select styling */
+.fut-select {
+  background: var(--fut-bg-input);
+  border: 1px solid var(--fut-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--fut-text-primary);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a8a9a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+}
+
+.fut-select:focus {
+  outline: none;
+  border-color: var(--fut-gold);
+}
+
+/* Pack animations */
+@keyframes packGlow {
+  0%, 100% { box-shadow: 0 0 30px rgba(212, 175, 55, 0.3); }
+  50% { box-shadow: 0 0 60px rgba(212, 175, 55, 0.6); }
+}
+
+@keyframes packOpen {
+  0% { transform: scale(1) rotateY(0deg); }
+  50% { transform: scale(1.1) rotateY(90deg); }
+  100% { transform: scale(0) rotateY(180deg); }
+}
+
+@keyframes cardReveal {
+  0% { opacity: 0; transform: scale(0.5) rotateY(180deg); }
+  50% { opacity: 1; transform: scale(1.1) rotateY(90deg); }
+  100% { opacity: 1; transform: scale(1) rotateY(0deg); }
+}
+
+.pack-glow {
+  animation: packGlow 2s ease-in-out infinite;
+}
+
+.pack-opening {
+  animation: packOpen 0.8s ease-in-out forwards;
+}
+
+.card-revealing {
+  animation: cardReveal 0.6s ease-out forwards;
+}
+
+/* Rating badge */
+.rating-badge {
+  background: var(--fut-gradient-gold);
+  color: #000;
+  font-weight: 900;
+  font-size: 28px;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--fut-bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--fut-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--fut-gold-dark);
+}
+
+/* Table styling */
+.fut-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fut-table th {
+  background: var(--fut-bg-card);
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--fut-gold);
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 1px;
+  border-bottom: 2px solid var(--fut-border);
+}
+
+.fut-table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--fut-border);
+}
+
+.fut-table tr:hover td {
+  background: var(--fut-bg-card-hover);
+}
+
+/* Modal */
+.fut-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.fut-modal {
+  background: var(--fut-bg-panel);
+  border: 1px solid var(--fut-border);
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--fut-shadow);
+}
+
+/* Navigation */
+.fut-nav {
+  background: var(--fut-bg-card);
+  border-bottom: 1px solid var(--fut-border);
+  padding: 0 24px;
+}
+
+.fut-nav-link {
+  color: var(--fut-text-secondary);
+  padding: 20px 16px;
+  display: inline-block;
+  text-decoration: none;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+}
+
+.fut-nav-link:hover {
+  color: var(--fut-text-primary);
+}
+
+.fut-nav-link.active {
+  color: var(--fut-gold);
+  border-bottom-color: var(--fut-gold);
+}
+
+/* Badge */
+.fut-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fut-badge-bronze { background: var(--rarity-bronze-bg); color: var(--rarity-bronze); }
+.fut-badge-silver { background: var(--rarity-silver-bg); color: var(--rarity-silver); }
+.fut-badge-gold { background: var(--rarity-gold-bg); color: var(--rarity-gold); }
+.fut-badge-rare-gold { background: var(--rarity-rare-gold-bg); color: var(--rarity-rare-gold); border: 1px solid var(--rarity-rare-gold); }
+.fut-badge-inform { background: var(--rarity-inform-bg); color: #ff6b00; border: 1px solid #ff6b00; }
+.fut-badge-icon { background: var(--rarity-icon-bg); color: var(--rarity-icon); border: 1px solid var(--rarity-icon); }
+.fut-badge-hero { background: var(--rarity-hero-bg); color: var(--rarity-hero); border: 1px solid var(--rarity-hero); }
+
+/* Hexagon pattern background */
+.hex-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill='%231a1a2a' fill-opacity='0.4'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9z'%3E%3C/path%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Grain texture */
+.grain-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
